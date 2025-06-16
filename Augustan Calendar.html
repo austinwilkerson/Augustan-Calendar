@@ -298,6 +298,7 @@
             // Determine the current Augustan month
             const today = new Date();
             const currentMonth = getAugustanMonthIndex(today);
+            document.getElementById('month-select').value = currentMonth;
             
             // Add keyboard navigation
             document.addEventListener('keydown', function(e) {
