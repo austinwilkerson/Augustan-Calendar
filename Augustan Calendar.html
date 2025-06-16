@@ -474,7 +474,7 @@
                     dayElement.classList.add('today');
                 }
 
-                // Mark first Primeday of month as Holy Day (for months 1-9)
+                // Mark first Primeday of month as Holy Day for the first nine months (indices 0–8)
                 if (monthIndex < 9 && day === 1 && weekdayIndex === 0) {
                     dayElement.classList.add('holy-day', 'holy-highlight');
                     dayElement.classList.add('day-spirit');
