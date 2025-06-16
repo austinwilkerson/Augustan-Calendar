@@ -167,12 +167,12 @@
         <!-- Month Selector -->
         <div class="bg-white rounded-xl shadow-md p-6 mb-8">
             <nav class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" aria-label="Month navigation">
-                <div class="flex items-center space-x-4">
-                    <button id="prev-month" class="text-gray-500 hover:text-indigo-600">
+                <div class="relative flex items-center justify-center w-full md:w-auto">
+                    <button id="prev-month" class="absolute left-0 text-gray-500 hover:text-indigo-600">
                         <i class="fas fa-chevron-left"></i>
                     </button>
-                    <h2 class="text-2xl font-bold text-gray-800" id="current-month">Current Month</h2>
-                    <button id="next-month" class="text-gray-500 hover:text-indigo-600">
+                    <h2 class="text-2xl font-bold text-gray-800 mx-8" id="current-month">Current Month</h2>
+                    <button id="next-month" class="absolute right-0 text-gray-500 hover:text-indigo-600">
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
@@ -201,8 +201,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            
+            </nav>
+
             <!-- Weekday Names -->
             <div id="weekday-headers" class="grid grid-cols-10 gap-2 mb-4">
                 <div class="text-center font-medium text-sm py-2">Primeday</div>
@@ -243,7 +243,6 @@
                     <div class="w-6 h-6 rounded-full day-body mr-2"></div>
                     <span class="text-sm">Body</span>
                 </div>
-            </div>
         </div>
     </main>
 
