@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Augustan Calendar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .day-spirit { background-color: #6B8E23; }  /* OliveDrab - better contrast */
+        .day-soul { background-color: #4682B4; }    /* SteelBlue - better contrast */
+        .day-mind { background-color: #663399; }    /* RebeccaPurple - better contrast */
+        .day-body { background-color: #CD853F; }    /* Peru - better contrast */
+        .day-feast { background-color: #DB7093; }   /* PaleVioletRed - better contrast */
+        .day-neutral { background-color: #FFFFFF; }
+        
+        /* Full background colors for themed days */
+        .day-card.day-spirit { background-color: #D8E8D8; }  /* Lighter but better contrast */
+        .day-card.day-soul { background-color: #D0E3F2; }    /* Lighter but better contrast */
+        .day-card.day-mind { background-color: #E8D8F0; }    /* Lighter but better contrast */
+        .day-card.day-body { background-color: #F5E6D3; }    /* Lighter but better contrast */
+        
+        .theme-spirit { color: #6B8E23; }
+        .theme-soul { color: #4682B4; }
+        .theme-mind { color: #663399; }
+        .theme-body { color: #CD853F; }
+        .theme-feast { color: #DB7093; }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(10, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+        
+        .calendar-grid.calendar-grid-last-month {
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        }
+        
+        @media (max-width: 1024px) {
+            .calendar-grid {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .calendar-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        
+        .day-card {
+            transition: all 0.3s ease;
+            position: relative;
+            border-left: 4px solid transparent;
+        }
+        
+        /* Add colored left border to match theme */
+        .day-card.day-spirit { border-left-color: #6B8E23; }
+        .day-card.day-soul { border-left-color: #4682B4; }
+        .day-card.day-mind { border-left-color: #663399; }
+        .day-card.day-body { border-left-color: #CD853F; }
+        
+        .day-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .today {
+            border: 2px solid #4F46E5 !important;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+            animation: pulseToday 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseToday {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .holy-day::after {
+            content: "Holy Day";
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background-color: rgba(255,255,255,0.8);
+            padding: 0 4px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: bold;
+            color: #4F46E5;
+        }
+        
+        .holy-highlight {
+            box-shadow: 0 0 0 2px gold;
+        }
+        
+        .christmas-eve::after {
+            content: "Christmas Eve";
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background-color: rgba(255,255,255,0.8);
+            padding: 0 4px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: bold;
+            color: #4F46E5;
+        }
+
+        .day-highlight {
+            outline: 3px solid #4F46E5;
+            outline-offset: 2px;
+            z-index: 2;
+            transform: scale(1.02);
+            transition: all 0.3s ease;
+            animation: fadeInHighlight 0.3s ease-out;
+        }
+
+        @keyframes fadeInHighlight {
+            from { opacity: 0.5; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1.02); }
+        }
+        
+        .time-display {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <main class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Augustan Calendar</h1>
+                    <p class="text-gray-600">A reimagined timekeeping system</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">Gregorian:</span>
+                        <span id="gregorian-date" class="font-medium"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Current Time Display -->
+            <div class="mt-8 bg-gray-50 rounded-lg p-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700">Current Time</h2>
+                        <div class="time-display text-4xl font-bold mt-2">
+                            <span id="augustan-date" class="text-indigo-700"></span>
+                            <span class="mx-2 text-gray-400">|</span>
+                            <span id="augustan-time" class="text-indigo-700"></span>
+                        </div>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">Standard Time:</span>
+                            <span id="standard-time" class="font-medium"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Month Selector -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <nav class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" aria-label="Month navigation">
+                <div class="flex items-center space-x-4">
+                    <button id="prev-month" class="text-gray-500 hover:text-indigo-600">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h2 class="text-2xl font-bold text-gray-800" id="current-month">Current Month</h2>
+                    <button id="next-month" class="text-gray-500 hover:text-indigo-600">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
+                    <button id="today-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95">
+                        Today
+                    </button>
+                    <div class="relative">
+                        <select id="month-naming" class="appearance-none bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="numerical">Numerical Months</option>
+                            <option value="disciple">Disciple-Based Months</option>
+                            <option value="seasonal">Seasonal Months</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
+                        <select id="month-select" class="appearance-none bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <!-- Months will be populated by JavaScript -->
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Weekday Names -->
+            <div id="weekday-headers" class="grid grid-cols-10 gap-2 mb-4">
+                <div class="text-center font-medium text-sm py-2">Primeday</div>
+                <div class="text-center font-medium text-sm py-2">Biday</div>
+                <div class="text-center font-medium text-sm py-2">Triday</div>
+                <div class="text-center font-medium text-sm py-2">Quartaday</div>
+                <div class="text-center font-medium text-sm py-2">Pentaday</div>
+                <div class="text-center font-medium text-sm py-2">Hexaday</div>
+                <div class="text-center font-medium text-sm py-2">Septeday</div>
+                <div class="text-center font-medium text-sm py-2">Octoday</div>
+                <div class="text-center font-medium text-sm py-2">Novaday</div>
+                <div class="text-center font-medium text-sm py-2">Deciday</div>
+            </div>
+            
+            <!-- Calendar Grid -->
+            <div id="calendar" class="calendar-grid">
+                <!-- Days will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Day Themes</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="flex items-center legend-entry" data-theme="day-spirit">
+                    <div class="w-6 h-6 rounded-full day-spirit mr-2"></div>
+                    <span class="text-sm">Spirit</span>
+                </div>
+                <div class="flex items-center legend-entry" data-theme="day-soul">
+                    <div class="w-6 h-6 rounded-full day-soul mr-2"></div>
+                    <span class="text-sm">Soul</span>
+                </div>
+                <div class="flex items-center legend-entry" data-theme="day-mind">
+                    <div class="w-6 h-6 rounded-full day-mind mr-2"></div>
+                    <span class="text-sm">Mind</span>
+                </div>
+                <div class="flex items-center legend-entry" data-theme="day-body">
+                    <div class="w-6 h-6 rounded-full day-body mr-2"></div>
+                    <span class="text-sm">Body</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Constants
+        const DAYS_IN_FULL_MONTH = 40;
+        const MONTHS_IN_YEAR = 10;
+        const DAYS_IN_LAST_MONTH = 5; // Plus possible leap day
+        
+        // Month naming systems
+        const monthSystems = {
+            numerical: [
+                "Primember", "Biember", "Triember", "Quartember", "Quintember",
+                "Sextember", "September", "October", "November", "December"
+            ],
+            disciple: [
+                "Petras", "Jacobus", "Ionus", "Andreas", "Philippos",
+                "Bartholomeus", "Matteus", "Judas", "Simonus", "Thomas"
+            ],
+            seasonal: [
+                "Winterma", "Frostma", "Springma", "Bloomma", "Greemma",
+                "Summama", "Heatma", "Harvestma", "Autumnma", "Coldma"
+            ]
+        };
+
+        // Weekday names
+        const weekdays = [
+            "Primeday", "Biday", "Triday", "Quartaday", "Pentaday",
+            "Hexaday", "Septeday", "Octoday", "Novaday", "Deciday"
+        ];
+
+        // Day themes
+        const dayThemes = {
+            0: { name: "Spirit", class: "day-spirit", icon: "fa-leaf" },
+            4: { name: "Soul", class: "day-soul", icon: "fa-water" },
+            5: { name: "Mind", class: "day-mind", icon: "fa-brain" },
+            9: { name: "Body", class: "day-body", icon: "fa-running" }
+        };
+
+        // Special days in Thomas month
+        const thomasDays = {
+            0: { class: "day-spirit holy-highlight", name: "Feast of the Christ" },
+            1: { class: "day-soul", name: "Soul" },
+            2: { class: "day-mind", name: "Mind" },
+            3: { class: "day-body christmas-eve", name: "Body" },
+            4: { class: "day-feast", name: "Christmas" },
+            5: { class: "day-neutral", name: "Leap Day" }
+        };
+
+        // Initialize the calendar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current month to today's month
+            const today = new Date();
+            const currentMonth = getAugustanMonthIndex(today);
+            
+            // Add keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    navigateMonth(-1);
+                } else if (e.key === 'ArrowRight') {
+                    navigateMonth(1);
+                }
+            });
+            
+            // Set Disciple-based months as default
+            document.getElementById('month-naming').value = 'disciple';
+            
+            // Set up event listeners
+            document.getElementById('month-naming').addEventListener('change', updateMonthNames);
+            document.getElementById('month-select').addEventListener('change', updateCalendar);
+            document.getElementById('today-btn').addEventListener('click', goToToday);
+            document.getElementById('prev-month').addEventListener('click', () => navigateMonth(-1));
+            document.getElementById('next-month').addEventListener('click', () => navigateMonth(1));
+            
+            // Initialize time display
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Initialize calendar
+            updateMonthNames();
+        });
+
+        // Update the month names based on selected naming system
+        function updateMonthNames() {
+            const namingSystem = document.getElementById('month-naming').value;
+            const monthSelect = document.getElementById('month-select');
+            
+            // Clear existing options
+            monthSelect.innerHTML = '';
+            
+            // Add new options
+            monthSystems[namingSystem].forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
+            
+            // Update calendar
+            updateCalendar();
+        }
+
+        // Update the calendar display
+        function updateCalendar() {
+            const monthIndex = parseInt(document.getElementById('month-select').value);
+            const namingSystem = document.getElementById('month-naming').value;
+            const monthName = monthSystems[namingSystem][monthIndex];
+            
+            // Calculate today's date once
+            const today = new Date();
+            const augustanToday = getAugustanDateParts(today);
+            
+            // Update month title
+            document.getElementById('current-month').textContent = monthName;
+            
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+            
+            // Special grid layout for last month
+            const weekdayHeaders = document.getElementById('weekday-headers');
+            if (monthIndex === MONTHS_IN_YEAR - 1) {
+                calendar.classList.add('calendar-grid-last-month');
+                calendar.classList.add('calendar-grid'); // ensure it's still a grid
+                calendar.classList.remove('grid-cols-10');
+                weekdayHeaders.innerHTML = weekdays
+                    .slice(0, DAYS_IN_LAST_MONTH)
+                    .map(day => `<div class="text-center font-medium text-sm py-2">${day}</div>`)
+                    .join('');
+            } else {
+                calendar.classList.add('calendar-grid');
+                calendar.classList.remove('calendar-grid-last-month');
+                weekdayHeaders.innerHTML = weekdays
+                    .map(day => `<div class="text-center font-medium text-sm py-2">${day}</div>`)
+                    .join('');
+            }
+            
+            // Determine number of days in the month
+            const daysInMonth = (monthIndex === MONTHS_IN_YEAR - 1) 
+                ? (isLeapYear(new Date().getFullYear()) ? DAYS_IN_LAST_MONTH + 1 : DAYS_IN_LAST_MONTH) 
+                : DAYS_IN_FULL_MONTH;
+            
+            // Create day elements
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day-card bg-white rounded-lg p-3 shadow-sm border border-gray-200';
+                
+                // Calculate weekday index (0-9)
+                const weekdayIndex = (day - 1) % 10;
+                
+                // Special handling for Thomas month
+                if (monthIndex === 9) {
+                    const theme = thomasDays[day - 1];
+                    if (theme) {
+                        dayElement.classList.add(...theme.class.split(" "));
+                        dayElement.innerHTML = `
+                            <div class="font-bold text-lg mb-1">${day}</div>
+                            <div class="text-xs font-medium">${theme.name}</div>
+                        `;
+                    } else {
+                        dayElement.classList.add("day-neutral");
+                        dayElement.innerHTML = `
+                            <div class="font-bold text-lg mb-1">${day}</div>
+                            <div class="text-xs font-medium">Unnamed</div>
+                        `;
+                    }
+                } else {
+                    // Regular month - assign color class based on weekday index for EVERY day
+                    let colorClass = 'day-neutral';
+                    let innerHtml = `
+                        <div class="font-bold text-lg mb-1">${day}</div>
+                        <div class="text-xs text-gray-500">${weekdays[weekdayIndex]}</div>
+                    `;
+
+                    // Set theme for Spirit, Soul, Mind, Body
+                    if (weekdayIndex === 0) { // Primeday
+                        colorClass = 'day-spirit';
+                        innerHtml = `
+                            <div class="font-bold text-lg mb-1">${day}</div>
+                            <div class="flex items-center">
+                                <i class="fas fa-leaf mr-1 text-xs"></i>
+                                <span class="text-xs font-medium">Spirit</span>
+                            </div>
+                        `;
+                    } else if (weekdayIndex === 4) { // Pentaday
+                        colorClass = 'day-soul';
+                        innerHtml = `
+                            <div class="font-bold text-lg mb-1">${day}</div>
+                            <div class="flex items-center">
+                                <i class="fas fa-water mr-1 text-xs"></i>
+                                <span class="text-xs font-medium">Soul</span>
+                            </div>
+                        `;
+                    } else if (weekdayIndex === 5) { // Hexaday
+                        colorClass = 'day-mind';
+                        innerHtml = `
+                            <div class="font-bold text-lg mb-1">${day}</div>
+                            <div class="flex items-center">
+                                <i class="fas fa-brain mr-1 text-xs"></i>
+                                <span class="text-xs font-medium">Mind</span>
+                            </div>
+                        `;
+                    } else if (weekdayIndex === 9) { // Deciday
+                        colorClass = 'day-body';
+                        innerHtml = `
+                            <div class="font-bold text-lg mb-1">${day}</div>
+                            <div class="flex items-center">
+                                <i class="fas fa-running mr-1 text-xs"></i>
+                                <span class="text-xs font-medium">Body</span>
+                            </div>
+                        `;
+                    }
+
+                    // Always add the class (so every cell is styled)
+                    dayElement.classList.add(colorClass);
+                    dayElement.innerHTML = innerHtml;
+                }
+                
+                // Highlight today if this is the current day
+                if (
+                    augustanToday.monthIndex === monthIndex &&
+                    augustanToday.day === day
+                ) {
+                    dayElement.classList.add('today');
+                }
+
+                // Mark first Primeday of month as Holy Day (for months 1-9)
+                if (monthIndex < 9 && day === 1 && weekdayIndex === 0) {
+                    dayElement.classList.add('holy-day', 'holy-highlight');
+                    dayElement.classList.add('day-spirit');
+                }
+
+                // Add Gregorian equivalent
+                const gregorianDate = document.createElement('div');
+                gregorianDate.className = 'text-xs mt-2 text-gray-500';
+                gregorianDate.textContent = getGregorianEquivalent(monthIndex, day);
+                dayElement.appendChild(gregorianDate);
+                
+                calendar.appendChild(dayElement);
+            }
+        }
+
+        // Get decomposed Augustan date parts
+        function getAugustanDateParts(date) {
+            const gregorianDate = new Date(date);
+            const currentYear = gregorianDate.getFullYear();
+            
+            // Determine Augustan year (starts in previous Gregorian year)
+            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 && 
+                gregorianDate.getDate() >= (isLeapYear(currentYear) ? 27 : 26) ? 0 : 1);
+            
+            // Augustan year starts on Dec 26 (27 in leap years) of previous Gregorian year
+            const augustanYearStart = new Date(
+                augustanYear,
+                11, // December
+                isLeapYear(augustanYear + 1) ? 27 : 26
+            );
+            
+            // Calculate days since Augustan new year
+            const diffTime = gregorianDate - augustanYearStart;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            return {
+                year: augustanYear + 1,
+                monthIndex: Math.min(MONTHS_IN_YEAR - 1, Math.floor(diffDays / DAYS_IN_FULL_MONTH)),
+                day: (diffDays % DAYS_IN_FULL_MONTH) + 1
+            };
+        }
+
+        // Get Augustan month index from Gregorian date
+        function getAugustanMonthIndex(date) {
+            const gregorianDate = new Date(date);
+            const currentYear = gregorianDate.getFullYear();
+            
+            // Determine Augustan year (starts in previous Gregorian year)
+            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 && 
+                gregorianDate.getDate() >= (isLeapYear(currentYear) ? 27 : 26) ? 0 : 1);
+            
+            // Augustan year starts on Dec 26 (27 in leap years) of previous Gregorian year
+            const augustanYearStart = new Date(
+                augustanYear,
+                11, // December
+                isLeapYear(augustanYear + 1) ? 27 : 26
+            );
+            
+            // Calculate days since Augustan new year
+            const diffTime = gregorianDate - augustanYearStart;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Return month index (0-9)
+            return Math.min(9, Math.floor(diffDays / 40));
+        }
+
+        // Navigate between months
+        function navigateMonth(offset) {
+            const monthSelect = document.getElementById('month-select');
+            let newIndex = parseInt(monthSelect.value) + offset;
+            if (newIndex < 0) newIndex = 9;
+            if (newIndex > 9) newIndex = 0;
+            monthSelect.value = newIndex;
+            monthSelect.focus(); // Ensure focus for keyboard navigation
+            updateCalendar();
+        }
+
+        // Go to today's month and highlight today
+        function goToToday() {
+            const today = new Date();
+            const monthSelect = document.getElementById('month-select');
+            monthSelect.value = getAugustanMonthIndex(today);
+            updateCalendar();
+        }
+
+        // Get Gregorian equivalent date
+        function getGregorianEquivalent(monthIndex, day) {
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            
+            // Determine Augustan year (starts in previous Gregorian year)
+            const augustanYear = currentYear - (currentDate.getMonth() === 11 && 
+                currentDate.getDate() >= (isLeapYear(currentYear) ? 27 : 26) ? 0 : 1);
+            
+            // Augustan year starts on Dec 26 (27 in leap years) of previous Gregorian year
+            const augustanYearStart = new Date(
+                augustanYear,
+                11, // December
+                isLeapYear(augustanYear + 1) ? 27 : 26
+            );
+            
+            // Calculate days since Augustan new year (0-based)
+            const daysSinceNewYear = (monthIndex * DAYS_IN_FULL_MONTH) + (day - 1);
+            
+            // Calculate Gregorian date
+            const gregorianDate = new Date(augustanYearStart);
+            gregorianDate.setDate(augustanYearStart.getDate() + daysSinceNewYear);
+            
+            // Format as short date
+            return gregorianDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        }
+
+        // Update the time display
+        function updateTime() {
+            const now = new Date();
+            
+            // Display Gregorian date and time
+            document.getElementById('gregorian-date').textContent = now.toLocaleDateString();
+            document.getElementById('standard-time').textContent = now.toLocaleTimeString();
+            
+            // Calculate Augustan date
+            const augustanDate = getAugustanDate(now);
+            document.getElementById('augustan-date').textContent = augustanDate;
+            
+            // Calculate Augustan time
+            const augustanTime = getAugustanTime(now);
+            document.getElementById('augustan-time').textContent = augustanTime;
+        }
+
+        // Get Augustan date string
+        function getAugustanDate(date) {
+            const gregorianDate = new Date(date);
+            const currentYear = gregorianDate.getFullYear();
+            
+            // Determine Augustan year (starts in previous Gregorian year)
+            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 && 
+                gregorianDate.getDate() >= (isLeapYear(currentYear) ? 27 : 26) ? 0 : 1);
+            
+            // Augustan year starts on Dec 26 (27 in leap years) of previous Gregorian year
+            const augustanYearStart = new Date(
+                augustanYear,
+                11, // December
+                isLeapYear(augustanYear + 1) ? 27 : 26
+            );
+            
+            // Calculate days since Augustan new year
+            const diffTime = gregorianDate - augustanYearStart;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Calculate Augustan month and day
+            const monthIndex = Math.min(9, Math.floor(diffDays / 40));
+            const day = (diffDays % 40) + 1;
+            
+            const namingSystem = document.getElementById('month-naming').value;
+            const augustanMonth = monthSystems[namingSystem][monthIndex];
+            
+            return `${augustanMonth} ${day}, ${augustanYear + 1}`;
+        }
+
+        // Get Augustan time string
+        function getAugustanTime(date) {
+            const totalSeconds = (date.getHours() * 3600) + (date.getMinutes() * 60) + date.getSeconds();
+            const totalAugustanSeconds = Math.floor(totalSeconds * (100000 / 86400));
+            
+            const augustanHours = Math.floor(totalAugustanSeconds / 10000);
+            const remainingSeconds = totalAugustanSeconds % 10000;
+            const augustanMinutes = Math.floor(remainingSeconds / 100);
+            const augustanSeconds = remainingSeconds % 100;
+            
+            return `${augustanHours.toString().padStart(2, '0')}:${augustanMinutes.toString().padStart(2, '0')}:${augustanSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Check if a year is a leap year
+        function isLeapYear(year) {
+            return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        }
+
+        // Legend hover interactions
+        document.addEventListener("DOMContentLoaded", function() {
+            const legendEntries = document.querySelectorAll('.legend-entry');
+            legendEntries.forEach(entry => {
+                const theme = entry.getAttribute('data-theme');
+                entry.addEventListener('mouseenter', function() {
+                    document.querySelectorAll('.' + theme).forEach(day => {
+                        day.classList.add('day-highlight');
+                    });
+                });
+                entry.addEventListener('mouseleave', function() {
+                    document.querySelectorAll('.' + theme).forEach(day => {
+                        day.classList.remove('day-highlight');
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
