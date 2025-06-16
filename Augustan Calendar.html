@@ -295,7 +295,7 @@
 
         // Initialize the calendar
         document.addEventListener('DOMContentLoaded', function() {
-            // Set current month to today's month
+            // Determine the current Augustan month
             const today = new Date();
             const currentMonth = getAugustanMonthIndex(today);
             
@@ -322,18 +322,22 @@
             updateTime();
             setInterval(updateTime, 1000);
             
-            // Initialize calendar
-            updateMonthNames();
+            // Initialize calendar with today's month selected
+            updateMonthNames(currentMonth);
         });
 
         // Update the month names based on selected naming system
-        function updateMonthNames() {
+        function updateMonthNames(selectedIndex) {
             const namingSystem = document.getElementById('month-naming').value;
             const monthSelect = document.getElementById('month-select');
-            
+
+            // Preserve currently selected month if none provided
+            const currentIndex =
+                selectedIndex !== undefined ? selectedIndex : parseInt(monthSelect.value) || 0;
+
             // Clear existing options
             monthSelect.innerHTML = '';
-            
+
             // Add new options
             monthSystems[namingSystem].forEach((month, index) => {
                 const option = document.createElement('option');
@@ -341,8 +345,9 @@
                 option.textContent = month;
                 monthSelect.appendChild(option);
             });
-            
-            // Update calendar
+
+            // Restore selection and update calendar
+            monthSelect.value = currentIndex;
             updateCalendar();
         }
 
