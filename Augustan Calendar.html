@@ -395,8 +395,8 @@
             }
             
             // Determine number of days in the month
-            const daysInMonth = (monthIndex === MONTHS_IN_YEAR - 1) 
-                ? (isLeapYear(new Date().getFullYear()) ? DAYS_IN_LAST_MONTH + 1 : DAYS_IN_LAST_MONTH) 
+            const daysInMonth = (monthIndex === MONTHS_IN_YEAR - 1)
+                ? (isLeapYear(new Date().getFullYear() + 1) ? DAYS_IN_LAST_MONTH + 1 : DAYS_IN_LAST_MONTH)
                 : DAYS_IN_FULL_MONTH;
             
             // Create day elements
@@ -505,8 +505,8 @@
             const currentYear = gregorianDate.getFullYear();
             
             // Determine Augustan year (starts in previous Gregorian year)
-            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 && 
-                gregorianDate.getDate() >= (isLeapYear(currentYear) ? 27 : 26) ? 0 : 1);
+            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 &&
+                gregorianDate.getDate() >= (isLeapYear(currentYear + 1) ? 27 : 26) ? 0 : 1);
             
             // Augustan year starts on Dec 26 (27 in leap years) of previous Gregorian year
             const augustanYearStart = new Date(
@@ -532,8 +532,8 @@
             const currentYear = gregorianDate.getFullYear();
             
             // Determine Augustan year (starts in previous Gregorian year)
-            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 && 
-                gregorianDate.getDate() >= (isLeapYear(currentYear) ? 27 : 26) ? 0 : 1);
+            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 &&
+                gregorianDate.getDate() >= (isLeapYear(currentYear + 1) ? 27 : 26) ? 0 : 1);
             
             // Augustan year starts on Dec 26 (27 in leap years) of previous Gregorian year
             const augustanYearStart = new Date(
@@ -575,8 +575,8 @@
             const currentYear = currentDate.getFullYear();
             
             // Determine Augustan year (starts in previous Gregorian year)
-            const augustanYear = currentYear - (currentDate.getMonth() === 11 && 
-                currentDate.getDate() >= (isLeapYear(currentYear) ? 27 : 26) ? 0 : 1);
+            const augustanYear = currentYear - (currentDate.getMonth() === 11 &&
+                currentDate.getDate() >= (isLeapYear(currentYear + 1) ? 27 : 26) ? 0 : 1);
             
             // Augustan year starts on Dec 26 (27 in leap years) of previous Gregorian year
             const augustanYearStart = new Date(
@@ -619,8 +619,8 @@
             const currentYear = gregorianDate.getFullYear();
             
             // Determine Augustan year (starts in previous Gregorian year)
-            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 && 
-                gregorianDate.getDate() >= (isLeapYear(currentYear) ? 27 : 26) ? 0 : 1);
+            const augustanYear = currentYear - (gregorianDate.getMonth() === 11 &&
+                gregorianDate.getDate() >= (isLeapYear(currentYear + 1) ? 27 : 26) ? 0 : 1);
             
             // Augustan year starts on Dec 26 (27 in leap years) of previous Gregorian year
             const augustanYearStart = new Date(
